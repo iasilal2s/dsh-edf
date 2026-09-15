@@ -1,0 +1,18 @@
+# ============================================================================
+# dsh-theme-endfield —— DSH bundle patch
+# ============================================================================
+# 插件的“挂载声明”：DSH 启动时按 bundle 层栈叠加各插件 patch，本文件把
+# 终末地主题的客户端插件行插入 Web profile 的配置树。
+#
+# 安装（推荐）：
+#   dsh plugin --profile web add link:<本目录绝对路径>
+# 或从 npm 安装：
+#   dsh plugin --profile web add dsh-theme-endfield
+#
+# 卸载：
+#   dsh plugin --profile web remove dsh-theme-endfield
+# ============================================================================
+
+- insert:
+    - id: theme-endfield
+      name: dsh-theme-endfield

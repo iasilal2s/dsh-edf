@@ -1,0 +1,43 @@
+{
+  "name": "dsh-theme-endfield",
+  "version": "1.0.0",
+  "description": "明日方舟：终末地风格深色主题 — DSH Web 客户端皮肤插件（Arknights: Endfield style dark theme for the DSH Web GUI）",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "theme",
+    "endfield",
+    "arknights",
+    "dark"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "docs"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "license": "MIT"
+}

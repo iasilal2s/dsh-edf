@@ -1,0 +1,1080 @@
+/* ==========================================================================
+   dsh-theme-endfield — “明日方舟：终末地”风格深色皮肤
+   --------------------------------------------------------------------------
+   设计语言（Endfield field-engineering system）：
+     · 灰黑 #1a1a1a 平涂底 / 纸白 #f0f0f0 / 信号黄 #fffa00 / 校验绿 #00ffa2
+     · 地形等高线是唯一的背景纹理，底面上不铺任何条纹或网格
+     · 直角与小圆角几何、1px 结构线、切角面板、边角括号
+     · 等宽数据、大写微小标签、层次扁平（无玻璃感、无重阴影）
+     · 单一强调色：信号黄只用于选中 / 进度 / 主操作 / 计曲线
+   本文件由 scripts/build.mjs 内联进 lib/client.js，不单独发布。
+   ========================================================================== */
+
+/* ── 1. 基础量：字体、几何、信号色 ─────────────────────────────────────── */
+html:root {
+  /* 全站圆弧：圆角形状用真正的圆弧（round），控件与面板都用大圆角。 */
+  --dsw-corner-shape: round;
+
+  /* 技术感字体栈：界面用系统无衬线，数据用等宽。 */
+  --dsw-font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI",
+    "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  --ds-font-family-code: "Cascadia Mono", "JetBrains Mono", "SFMono-Regular",
+    Consolas, "Microsoft YaHei UI", monospace;
+
+  --ef-signal: #fffa00;
+  --ef-signal-soft: rgb(255 250 0 / 42%);
+  --ef-ink: #0c0c0c;
+  --ef-line: rgb(240 240 240 / 15%);
+  --ef-line-strong: rgb(240 240 240 / 28%);
+  --ef-radius: 10px;
+  --ef-radius-panel: 16px;
+  --ef-fillet: 34px;
+  --ef-fillet-overlap: 16px;
+  /* 主背景色（侧栏左上角切块露出的就是它）；浅色变体里会被覆盖。 */
+  --ef-page: #1a1a1a;
+
+  accent-color: var(--ef-signal);
+  caret-color: var(--ef-signal);
+  /* 深色专用：原生控件与滚动条不跟随偏好设置回到浅色。 */
+  color-scheme: dark !important;
+}
+
+/* 读数字段等宽对齐：索引、耗时、token 计数。 */
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 阴影层级整体压平，改为“描边 + 极浅投影”的工程图纸感。 */
+body,
+body * {
+  --dsw-shadow-lv1: 0 1px 3px rgb(0 0 0 / 45%);
+  --dsw-shadow-lv2: 0 4px 12px rgb(0 0 0 / 45%);
+  --dsw-shadow-lv3: 0 0 0 0.5px rgb(240 240 240 / 10%), 0 16px 40px rgb(0 0 0 / 55%);
+  --dsw-elevation-stroke-color: rgb(240 240 240 / 20%);
+  --dsw-linear-gradient-think: linear-gradient(180deg, #fffa00 20%, transparent 100%);
+  --dsw-linear-think-select: linear-gradient(180deg, #fff9c9 20%, transparent 100%);
+}
+
+/* ── 2. 焦点、选区、滚动条 ─────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ef-signal) !important;
+  outline-offset: 2px !important;
+}
+
+::selection {
+  background: rgb(255 250 0 / 88%);
+  color: var(--ef-ink);
+}
+
+/* 方形滚动条滑块（去圆角），宽度沿用主题令牌。 */
+::-webkit-scrollbar-thumb {
+  border-radius: 0 !important;
+}
+
+/* ── 3. 圆弧几何：控件、代码、行 ───────────────────────────────────────── */
+:where(
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  pre,
+  code,
+  kbd,
+  samp,
+  [role="tab"],
+  [role="tablist"],
+  [role="textbox"],
+  [class*="_sessionRow"],
+  [class*="_projectRow"],
+  [class*="_panelRow"],
+  [class*="_modelRow"],
+  [class*="_newSession"]
+) {
+  border-radius: var(--ef-radius) !important;
+}
+
+/* 代码块：右侧圆弧，左侧留一条信号黄书脊。 */
+:where(pre) {
+  border-radius: 0 var(--ef-radius) var(--ef-radius) 0 !important;
+}
+
+/* ── 4. 面板：一层描边 + 切角，取消玻璃模糊 ───────────────────────────── */
+:where([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"]) {
+  border: 1px solid var(--ef-line-strong) !important;
+  border-radius: var(--ef-radius-panel) !important;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(0 0 0 / 16%)) !important;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 55%),
+    0 20px 46px rgb(0 0 0 / 55%) !important;
+  backdrop-filter: none !important;
+}
+
+/* 弹窗（设置等）的 DOM 落在**侧栏子树**里——所以它继承了黄栏那套
+   「标签令牌 = 墨色」的反相。浅色变体下正好是对的（墨字白面），
+   深色变体下就成了墨字压在暗面板上，看着"很黑、什么都看不见"。
+   这里把页面级的文字/边框/交互令牌恢复回来（深色取值；浅色在第 10 节覆盖）。 */
+:where([role="dialog"], [role="alertdialog"]) {
+  color: #f2f2f0;
+
+  --dsw-alias-label-primary: #f2f2f0;
+  --dsw-alias-label-secondary: #bcbcb6;
+  --dsw-alias-label-tertiary: #94948e;
+  --dsw-alias-label-caption: #63635e;
+  --dsw-alias-label-primary-inverted: #0c0c0b;
+  --dsw-alias-label-primary-foreground: #0c0c0b;
+  --dsw-alias-brand-primary: #fffa00;
+  --dsw-alias-brand-text: #fffa00;
+  --dsw-alias-interactive-bg-hover: rgb(240 240 240 / 7%);
+  --dsw-alias-interactive-bg-active: rgb(240 240 240 / 13%);
+  --dsw-alias-border-l1: rgb(240 240 240 / 9%);
+  --dsw-alias-border-l2: rgb(240 240 240 / 15%);
+  --dsw-alias-border-l3: rgb(240 240 240 / 24%);
+  --dsw-alias-border-l4: rgb(240 240 240 / 36%);
+  --dsw-alias-bg-module-platform: rgb(240 240 240 / 8%);
+}
+
+/* 输入区：整块弧形浅灰面（比底面亮一档的灰，不与背景抢对比），
+   左侧一道信号黄短条作为唯一的强调。 */
+[data-composer-card] {
+  position: relative;
+  corner-shape: round !important;
+  border: 1px solid rgb(255 255 255 / 8%) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, #3a3a3a 0%, #313131 100%) !important;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 38%) !important;
+
+  /* 浅灰面上的文字层级整体提亮，保证占位符与标签仍然清楚。 */
+  --dsw-alias-label-primary: #f5f5f5;
+  --dsw-alias-label-secondary: #d4d4d4;
+  --dsw-alias-label-tertiary: #adadad;
+  --dsw-alias-label-caption: #949494;
+  --dsw-alias-label-primary-foreground: #141414;
+  --dsw-alias-interactive-bg-hover: rgb(255 255 255 / 10%);
+  --dsw-alias-interactive-bg-active: rgb(255 255 255 / 16%);
+  --dsw-alias-border-l1: rgb(255 255 255 / 10%);
+  --dsw-alias-border-l2: rgb(255 255 255 / 16%);
+  --dsw-alias-border-l3: rgb(255 255 255 / 22%);
+  --dsw-alias-border-l4: rgb(255 255 255 / 30%);
+}
+
+/* 输入区不再有黄色线条：整块就是一块弧形浅灰面。 */
+[data-composer-card]::after {
+  content: none;
+}
+
+/* 输入区内的按钮（+、模型、发送）改成圆形，与弧形面板同一语言。 */
+[data-composer-card] :where(button) {
+  corner-shape: round !important;
+  border-radius: 999px !important;
+}
+
+/* 发送键：浅灰面上的纸白圆钮 + 墨色图标（主操作不靠黄色也认得出）。 */
+[data-composer-card] :where(button[class*="_primary"]) {
+  background: #f0f0f0 !important;
+  color: #141414 !important;
+}
+
+/* 输入区内的焦点环用纸白，避免焦点时在聊天框周围出现一圈黄色。 */
+[data-composer-card] :focus-visible {
+  outline-color: rgb(255 255 255 / 60%) !important;
+}
+
+/* 输入区内的芯片（工作区、模型、权限）：小胶囊，悬停也只是提亮描边。 */
+[data-composer-chip] {
+  corner-shape: round !important;
+  border: 1px solid rgb(255 255 255 / 14%) !important;
+  border-radius: 999px !important;
+  background: rgb(255 255 255 / 4%) !important;
+}
+
+[data-composer-chip]:hover {
+  border-color: rgb(255 255 255 / 34%) !important;
+}
+
+/* 用户气泡：同样是弧形浅灰面。 */
+:where([class*="_bubble"]) {
+  corner-shape: round !important;
+}
+
+/* 输入区下方的状态条（tokens / 模型 / 权限）做成仪表带。 */
+[data-composer-stats] {
+  font-family: var(--ds-font-family-code) !important;
+  letter-spacing: 0.04em;
+}
+
+/* ── 5. 导航与列表：选中即信号条 ───────────────────────────────────────── */
+:where(
+  [class*="_sessionRow"][class*="_selected"],
+  [class*="_panelActive"],
+  [class*="_rowActive"],
+  [class*="_optionSelected"]
+) {
+  background: linear-gradient(90deg, rgb(255 250 0 / 9%), transparent 72%) !important;
+  box-shadow: inset 2px 0 0 var(--ef-signal) !important;
+}
+
+/* 侧栏“新会话”：主操作用信号黄描边，悬停反相。 */
+[class*="_newSession"] {
+  border: 1px solid rgb(13 13 12 / 45%) !important;
+  background: transparent !important;
+  color: #0d0d0c !important;
+}
+
+[class*="_newSession"]:hover {
+  background: #0d0d0c !important;
+  color: var(--ef-signal) !important;
+}
+
+/* 品牌字标：大写 + 字距，像设备铭牌。 */
+[class*="_brandName"] {
+  text-transform: uppercase;
+  letter-spacing: 0.12em !important;
+}
+
+/* 微小标签统一加字距（中文标签表现为字间透气，拉丁文字为大写微标签）。 */
+:where([class*="_eyebrow"], [class*="_groupTitle"], [class*="_panelTitle"], [class*="_sectionTitle"]) {
+  text-transform: uppercase;
+  letter-spacing: 0.1em !important;
+}
+
+/* ── 6. 内容区：表格与代码的工程制图感 ─────────────────────────────────── */
+:where(table) {
+  border-collapse: collapse;
+}
+
+:where(th) {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--ef-line-strong) !important;
+}
+
+:where(pre) {
+  border: 1px solid var(--ef-line) !important;
+  border-left: 2px solid var(--ef-signal-soft) !important;
+  border-radius: 0 var(--ef-radius) var(--ef-radius) 0 !important;
+}
+
+/* 外观偏好方块（浅色 / 深色 / 跟随系统）：选中态用信号黄描边。 */
+[class*="_themeCube"][class*="_selected"] {
+  border-color: var(--ef-signal) !important;
+  background: rgb(255 250 0 / 8%) !important;
+  box-shadow: inset 0 0 0 1px rgb(255 250 0 / 35%) !important;
+}
+
+:where(h1, h2, h3) {
+  letter-spacing: 0.01em;
+}
+
+/* ── 7. 界面外框：等高线场、扫描线、四角括号 ────────────────────────────── */
+[data-endfield-chrome] {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  contain: strict;
+}
+
+/* 等高线场（主界面）：贴着视口四周的地形线 + 两处落在画面内的山头；
+   径向遮罩只把中间压淡（不是抹掉），每 5 条一条信号黄「计曲线」，
+   整体 120s 极慢漂移。 */
+[data-ef="contour"] {
+  position: absolute;
+  inset: -3%;
+  -webkit-mask-image: radial-gradient(124% 106% at 50% 46%, rgb(0 0 0 / 20%) 26%, #000 88%);
+  mask-image: radial-gradient(124% 106% at 50% 46%, rgb(0 0 0 / 20%) 26%, #000 88%);
+  animation: ef-drift 120s ease-in-out infinite alternate;
+}
+
+[data-ef="contour"] svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-ef="contour"] path {
+  fill: none;
+  stroke: rgb(240 240 240 / 11%);
+  /* 等高线加粗：1px 在深底/纸白底上都偏细，读不出“地形”的感觉。
+     计曲线再粗一档——真实地形图里索引等高线本来就画得更重。 */
+  stroke-width: 1.7;
+  vector-effect: non-scaling-stroke;
+}
+
+[data-ef="contour"] path[data-ef-index] {
+  stroke: rgb(255 250 0 / 20%);
+  stroke-width: 2.4;
+}
+
+@keyframes ef-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-16px, -11px, 0) scale(1.015);
+  }
+}
+
+/* 底面上只有一片极浅的四周压暗，没有条纹、网格或辉光：
+   等高线是画面里唯一的纹理。 */
+[data-ef="wash"] {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(132% 124% at 50% 46%, transparent 58%, rgb(0 0 0 / 24%) 100%);
+}
+
+[data-ef="frame"] {
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgb(240 240 240 / 8%);
+  border-radius: 14px;
+}
+
+/* 侧栏与顶部黄带的连接处：内凹圆弧（concave fillet）。
+   黄栏在左、黄带在上，二者在内容区左上角形成一个 90° 内角；
+   这里补一块四分之一圆把它抹成圆弧，黄色因此是「流」过去的。
+   元素向上多留一段实色黄，盖住黄带尾部的渐隐区——否则圆弧与黄带之间
+   会露出一道底色空隙。 */
+[data-endfield-chrome] [data-ef="fillet"] {
+  display: none;
+  position: absolute;
+  left: var(--ef-rail-w, 0px);
+  top: calc(var(--ef-band-h, 0px) - var(--ef-fillet-overlap, 16px));
+  width: var(--ef-fillet);
+  height: calc(var(--ef-fillet) + var(--ef-fillet-overlap, 16px));
+  background-image: radial-gradient(
+    circle var(--ef-fillet) at 100% 100%,
+    rgb(255 250 0 / 0%) calc(100% - 1px),
+    var(--ef-signal) 100%
+  );
+}
+
+[data-endfield-chrome][data-shell-yellow] [data-ef="fillet"] {
+  display: block;
+}
+
+[data-ef="corner"] {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border: 0 solid var(--ef-signal);
+  animation: ef-breathe 2.4s var(--ds-ease-in-out, ease-in-out) infinite;
+}
+
+[data-ef="corner"][data-side="tl"] {
+  top: 5px;
+  left: 5px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+[data-ef="corner"][data-side="tr"] {
+  top: 5px;
+  right: 5px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+[data-ef="corner"][data-side="bl"] {
+  bottom: 5px;
+  left: 5px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+[data-ef="corner"][data-side="br"] {
+  right: 5px;
+  bottom: 5px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+@keyframes ef-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── 8. 开屏动画（官方站点式：深色装载屏 → 满屏信号黄擦除 → 界面） ──────── */
+[data-endfield-splash] {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483100;
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  background: #1a1a1a;
+  color-scheme: dark;
+  font-family: var(--dsw-font-family);
+  /* 溶解用的遮罩常驻在整层上（默认左对齐 = 完全不透明），
+     最后一段把它整体向右推：遮罩右端的透明区从**右侧**进入，
+     于是黄色连同装载屏从右往左化掉，露出下面的界面。 */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 50%, rgb(0 0 0 / 0%) 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 50%, rgb(0 0 0 / 0%) 100%);
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 0% 0;
+  mask-position: 0% 0;
+}
+
+[data-endfield-splash][data-phase="done"] {
+  display: none;
+}
+
+/* 底部读表：等宽 + 大字距，只在装载屏出现。 */
+[data-endfield-splash] [data-ef="s-readout"] {
+  position: absolute;
+  left: 26px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--ds-font-family-code);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: rgb(240 240 240 / 52%);
+  text-transform: uppercase;
+}
+
+[data-ef="s-dots"] {
+  display: inline-flex;
+  gap: 4px;
+}
+
+[data-ef="s-dots"] i {
+  width: 11px;
+  height: 4px;
+  background: rgb(240 240 240 / 20%);
+  transition: background-color 140ms linear;
+  transition-delay: calc(var(--i) * 45ms);
+}
+
+/* 装载中：五格跑动指示（steps 让它是“仪表”而不是缓动）。 */
+[data-endfield-splash]:not([data-phase]) [data-ef="s-dots"] i {
+  animation: ef-s-chase 1s steps(1, end) infinite;
+  animation-delay: calc(var(--i) * 110ms);
+}
+
+/* 就绪：五格依次点亮为信号黄。 */
+[data-endfield-splash][data-phase] [data-ef="s-dots"] i {
+  background: var(--ef-signal);
+}
+
+@keyframes ef-s-chase {
+  0% {
+    background: var(--ef-signal);
+  }
+  20%,
+  100% {
+    background: rgb(240 240 240 / 20%);
+  }
+}
+
+/* 装载屏的等高线场：以字标所在的山头为中心，逐圈「测绘」绘制出来。 */
+[data-ef="s-contour"] {
+  position: absolute;
+  inset: 0;
+}
+
+[data-ef="s-contour"] svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-ef="s-contour"] path {
+  fill: none;
+  stroke: rgb(240 240 240 / 11%);
+  /* 与主界面等高线同调加粗，计曲线更重。 */
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+[data-ef="s-contour"] path[data-ef-index] {
+  stroke: rgb(255 250 0 / 19%);
+  stroke-width: 2.1;
+}
+
+/* pathLength="1" 让每条线共享同一套 dash 动画：一条等高线自绘而出。 */
+[data-ef="s-contour"] svg[data-draw] path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ef-s-draw 900ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+@keyframes ef-s-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 装载屏底面同样保持平涂：只有一片极浅的四周压暗，让等高线自己跑出来。 */
+[data-ef="s-wash"] {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(122% 104% at 50% 46%, transparent 52%, rgb(0 0 0 / 30%) 100%);
+}
+
+/* 标定线：一条横贯屏幕的 1px 结构线 + 扫过的信号黄段。 */
+[data-ef="s-scan"] {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgb(240 240 240 / 10%);
+}
+
+[data-ef="s-scan"]::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 180px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--ef-signal) 62%, #fff8b0);
+  transform: translateX(-180px);
+  animation: ef-s-scan 620ms cubic-bezier(0.22, 0.8, 0.2, 1) 60ms both;
+}
+
+@keyframes ef-s-scan {
+  from {
+    transform: translateX(-180px);
+  }
+  to {
+    transform: translateX(calc(100vw + 180px));
+  }
+}
+
+/* 四角括号：装载屏上更大，逐个“扣上”。 */
+[data-ef="s-corner"] {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 0 solid var(--ef-signal);
+  opacity: 0;
+  animation: ef-s-snap 220ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+[data-ef="s-corner"][data-side="tl"] {
+  top: 18px;
+  left: 18px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+  animation-delay: 120ms;
+}
+
+[data-ef="s-corner"][data-side="tr"] {
+  top: 18px;
+  right: 18px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+  animation-delay: 190ms;
+}
+
+[data-ef="s-corner"][data-side="bl"] {
+  bottom: 18px;
+  left: 18px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+  animation-delay: 260ms;
+}
+
+[data-ef="s-corner"][data-side="br"] {
+  right: 18px;
+  bottom: 18px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  animation-delay: 330ms;
+}
+
+@keyframes ef-s-snap {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 中央字标：CJK 主标 + 拉丁微标签 + 信号棱形，横向遮罩揭示。
+   整体略高于中线，让 50% 处的标定线成为字标的下基线。 */
+[data-ef="s-mark"] {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+[data-ef="s-prism"] {
+  width: 9px;
+  height: 9px;
+  background: var(--ef-signal);
+  transform: rotate(45deg);
+  animation: ef-s-prism 320ms cubic-bezier(0.22, 0.8, 0.2, 1) 180ms both;
+}
+
+@keyframes ef-s-prism {
+  from {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+}
+
+[data-ef="s-title"] {
+  font-size: clamp(26px, 3.2vw, 44px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.14em;
+  color: #f0f0f0;
+  clip-path: inset(0 100% 0 0);
+  animation: ef-s-reveal 640ms cubic-bezier(0.22, 0.8, 0.2, 1) 240ms both;
+}
+
+[data-ef="s-sub"] {
+  font-family: var(--ds-font-family-code);
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  color: rgb(240 240 240 / 46%);
+  text-transform: uppercase;
+  clip-path: inset(0 100% 0 0);
+  animation: ef-s-reveal 520ms cubic-bezier(0.22, 0.8, 0.2, 1) 420ms both;
+}
+
+@keyframes ef-s-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* 满屏信号黄揭示，三段式：
+   ① 从右上角出现、沿右缘竖直延伸到底；② 整体向左滑动铺满全屏；
+   ③ 渐变溶解（遮罩从左往右扫过 + 整体淡出），露出界面。 */
+[data-ef="s-wipe"] {
+  position: absolute;
+  inset: 0;
+  background: var(--ef-signal);
+  /* 起始状态：右缘 10% 宽的窄柱，还未向下延伸。 */
+  clip-path: inset(0 0 100% 90%);
+}
+
+/* ① 竖直延伸：右缘 10% 宽（约十分之一屏）的黄柱自上而下长出来。 */
+[data-endfield-splash][data-phase="wipe-rise"] [data-ef="s-wipe"] {
+  animation: ef-s-rise 240ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+/* ② 整块向左滑动，直到铺满全屏。 */
+[data-endfield-splash][data-phase="wipe-slide"] [data-ef="s-wipe"] {
+  animation: ef-s-slide 340ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ③ 渐变溶解：整层（黄幕 + 装载屏）从右往左被遮罩化掉。 */
+[data-endfield-splash][data-phase="wipe-dissolve"] {
+  animation: ef-s-dissolve 380ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes ef-s-rise {
+  from {
+    clip-path: inset(0 0 100% 90%);
+  }
+  to {
+    clip-path: inset(0 0 0 90%);
+  }
+}
+
+@keyframes ef-s-slide {
+  from {
+    clip-path: inset(0 0 0 90%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes ef-s-dissolve {
+  from {
+    opacity: 1;
+    -webkit-mask-position: 0% 0;
+    mask-position: 0% 0;
+  }
+  to {
+    opacity: 0;
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+}
+
+/* 黄幕上的墨色字标“残影”：窄柱阶段放不下，等黄幕滑开到中间才淡入。 */
+[data-ef="s-ghost"] {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(26px, 3.2vw, 44px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  opacity: 0;
+  color: rgb(12 12 12 / 22%);
+}
+
+[data-endfield-splash][data-phase="wipe-slide"] [data-ef="s-ghost"],
+[data-endfield-splash][data-phase="wipe-dissolve"] [data-ef="s-ghost"] {
+  animation: ef-s-ghost 300ms ease-out 120ms both;
+}
+
+@keyframes ef-s-ghost {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 装载屏出现的整体节奏。 */
+[data-ef="s-readout"] {
+  animation: ef-s-fade 300ms ease-out 520ms both;
+}
+
+@keyframes ef-s-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── 9. 信号黄侧栏 + 顶部黄带（黄色从侧栏平滑漫过页面顶部） ─────────────── */
+
+/* 侧栏整列换成信号黄。该作用域内把文字/交互/边框令牌整体反相成墨色：
+   子元素读 var() 时自然解析成深色，不必逐组件改规则。
+
+   但字标那一行不在黄块里：侧栏根容器的底色改成主背景色，黄色只画在一条
+   大半径圆弧以内（圆心在左上远处，所以弧线右高左低）。于是左上角露出主背景，
+   黄块与暗底之间是一条平滑圆弧，而不是硬切。 */
+[class*="sidebarCol"] {
+  background-image: linear-gradient(180deg, #fffa00 0%, #f6f000 100%) !important;
+  border-right: 1px solid rgb(13 13 12 / 22%) !important;
+
+  --dsw-specific-sidebar-fill: #fffa00;
+  --dsw-alias-label-primary: #0d0d0c;
+  --dsw-alias-label-secondary: rgb(13 13 12 / 78%);
+  --dsw-alias-label-tertiary: rgb(13 13 12 / 60%);
+  --dsw-alias-label-caption: rgb(13 13 12 / 48%);
+  --dsw-alias-label-primary-dimmed: rgb(13 13 12 / 72%);
+  --dsw-alias-label-primary-inverted: #fffa00;
+  --dsw-alias-label-primary-foreground: #0d0d0c;
+  --dsw-alias-brand-primary: #0d0d0c;
+  --dsw-alias-brand-text: #0d0d0c;
+  --dsw-alias-interactive-bg-hover: rgb(13 13 12 / 10%);
+  --dsw-alias-interactive-bg-active: rgb(13 13 12 / 16%);
+  --dsw-alias-interactive-bg-hover-solid: rgb(13 13 12 / 14%);
+  --dsw-alias-border-l1: rgb(13 13 12 / 14%);
+  --dsw-alias-border-l2: rgb(13 13 12 / 20%);
+  --dsw-alias-border-l3: rgb(13 13 12 / 28%);
+  --dsw-alias-border-l4: rgb(13 13 12 / 40%);
+  --dsw-alias-bg-module-platform: rgb(13 13 12 / 12%);
+  --dsw-alias-button-elevated-fill: transparent;
+  --dsw-alias-button-floating-hover: rgb(13 13 12 / 12%);
+  --dsh-scrollbar-thumb: rgb(13 13 12 / 24%);
+  --dsh-scrollbar-thumb-hover: rgb(13 13 12 / 38%);
+  --dsw-alias-scrollbar-bg-l2: rgb(13 13 12 / 24%);
+  --dsw-alias-scrollbar-hover-l2: rgb(13 13 12 / 38%);
+}
+
+/* 侧栏左上角是**圆角**（凸向角、圆心在黄块内侧的 76px 四分之一圆），
+   不是"从角上挖掉一个圆"——那种凹口方向是反的。
+   画法：外层 `sidebarCol` 铺主背景色，内层根容器铺黄色并给一个 `border-top-left-radius`，
+   圆角切掉的那块自然露出外层的主背景色。两层都**不用伪元素、不加定位、不建层叠上下文**
+   （加了会把设置浮层 z-index:1000 困在侧栏子树里，被后面的会话列盖住）。
+   半径取 76px 是量出来的上限：圆弧在 x=20px（字标图标左缘）处只有 ≈25px 高，
+   正好从图标上方擦过，所以不需要移动任何内容。 */
+[class*="sidebarCol"] {
+  background-color: var(--ef-page) !important;
+  background-image: none !important;
+}
+
+[class*="sidebarCol"] > * > [class*="_root"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(180deg, #fffa00 0%, #f6f000 100%) !important;
+  border-top-left-radius: 76px;
+}
+
+/* 新会话按钮：去掉外圈描边，只留文字与图标。 */
+[class*="_newSession"] {
+  border: 0 !important;
+  background: transparent !important;
+  color: #0d0d0c !important;
+}
+
+/* 黄底上的选中行：信号条反相成墨色。 */
+[class*="sidebarCol"]
+  :where([class*="_sessionRow"][class*="_selected"], [class*="_rowActive"], [class*="_panelActive"]) {
+  background: linear-gradient(90deg, rgb(13 13 12 / 14%), rgb(13 13 12 / 4%) 72%, transparent) !important;
+  box-shadow: inset 2px 0 0 #0d0d0c !important;
+}
+
+/* 顶部黄带：把平涂的黄直接画在头部自己的背景上（内容自然压在黄之上），
+   不用伪元素、不加定位——同样是为了不制造层叠上下文。
+   会话头部浮在滚动区之上，所以黄带必须不透明：穿过头部的内容被干净地盖住。 */
+header[class*="_header"]:has([class*="_tabs"]) {
+  /* color 是继承下来的「计算值」，光重绑令牌不会给子元素重新着色，
+     所以这里直接把整条黄带的文字色定成墨色。 */
+  color: #0d0d0c;
+  background-color: var(--ef-signal) !important;
+  background-image: none !important;
+  border-bottom-color: rgb(13 13 12 / 18%) !important;
+
+  --dsw-alias-label-primary: #0d0d0c;
+  --dsw-alias-label-secondary: rgb(13 13 12 / 78%);
+  --dsw-alias-label-tertiary: rgb(13 13 12 / 60%);
+  --dsw-alias-label-caption: rgb(13 13 12 / 48%);
+  --dsw-alias-label-primary-inverted: #fffa00;
+  --dsw-alias-label-primary-foreground: #0d0d0c;
+  --dsw-alias-brand-primary: #0d0d0c;
+  --dsw-alias-brand-text: #0d0d0c;
+  --dsw-alias-interactive-bg-hover: rgb(13 13 12 / 10%);
+  --dsw-alias-interactive-bg-active: rgb(13 13 12 / 16%);
+  --dsw-alias-border-l1: rgb(13 13 12 / 14%);
+  --dsw-alias-border-l2: rgb(13 13 12 / 20%);
+  --dsw-alias-border-l3: rgb(13 13 12 / 28%);
+  --dsw-alias-border-l4: rgb(13 13 12 / 40%);
+  --dsw-alias-bg-module-platform: rgb(13 13 12 / 12%);
+}
+
+/* 黄底上的激活页签：只保留一条笔直的墨色横线（应用自带的 ::after 指示条），
+   去掉多余的圆角形状与内阴影。 */
+header[class*="_header"] :where([class*="_tab"]) {
+  background: transparent !important;
+}
+
+header[class*="_header"] :where([class*="_tab"])::after {
+  background: #0d0d0c !important;
+  border-radius: 0 !important;
+}
+
+header[class*="_header"] :where([class*="_tabActive"], [class*="_viewTabActive"]) {
+  color: #0d0d0c !important;
+  box-shadow: none !important;
+}
+
+/* 视口左侧的角标：上面那个落在暗底上，用信号黄；
+   下面那个仍在黄栏上，用墨色。 */
+[data-ef="corner"][data-side="bl"] {
+  border-color: rgb(13 13 12 / 55%);
+}
+
+/* ── 10. 浅色主背景变体（默认）────────────────────────────────────────────
+   配色层把两条中性色阶整条镜像，于是「深色模式」的别名映射落在浅底深字上；
+   这里只补样式表里写死的那些颜色（它们不是令牌，镜像管不到）：
+   结构线、等高线、外框/角标、面板、输入框、气泡、焦点环。
+   深色变体（`data-endfield-surface="dark"`）沿用第 1–9 节的原始值。 */
+html[data-endfield-surface="light"] {
+  --ef-line: rgb(20 20 20 / 20%);
+  --ef-line-strong: rgb(20 20 20 / 34%);
+  /* 侧栏左上角切块露出的“主背景”，在浅色变体里就是纸白底。 */
+  --ef-page: #f2f2f0;
+  /* 浅底上原生控件与滚动条要跟着变浅。 */
+  color-scheme: light !important;
+}
+
+/* 结构线：全局的 1px 细线从纸白换成墨色。 */
+html[data-endfield-surface="light"] :where(th) {
+  border-bottom-color: var(--ef-line-strong) !important;
+}
+
+html[data-endfield-surface="light"] :where(pre) {
+  border-color: var(--ef-line) !important;
+  border-left-color: rgb(176 164 0 / 70%) !important;
+}
+
+/* 面板（对话框/菜单/提示）：纸白面 + 墨色描边 + 更实的投影。
+   浅底上如果只做“比底色深一点”，浮层会和背景糊在一起，看着像没反应。
+   令牌也要一并恢复成页面级（弹窗 DOM 在侧栏子树里，默认会继承黄栏的墨色反相）。 */
+html[data-endfield-surface="light"]
+  :where([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"]) {
+  border: 1px solid var(--ef-line-strong) !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  box-shadow:
+    0 0 0 0.5px rgb(20 20 20 / 18%),
+    0 22px 48px rgb(20 20 20 / 22%) !important;
+}
+
+html[data-endfield-surface="light"] :where([role="dialog"], [role="alertdialog"]) {
+  color: #131312;
+
+  --dsw-alias-label-primary: #131312;
+  --dsw-alias-label-secondary: #3a3a38;
+  --dsw-alias-label-tertiary: #565654;
+  --dsw-alias-label-caption: #6f6f6c;
+  --dsw-alias-label-primary-inverted: #f2f2f0;
+  --dsw-alias-label-primary-foreground: #f2f2f0;
+  --dsw-alias-brand-primary: #b0ab00;
+  --dsw-alias-brand-text: #8a8600;
+  --dsw-alias-interactive-bg-hover: rgb(20 20 20 / 9%);
+  --dsw-alias-interactive-bg-active: rgb(20 20 20 / 15%);
+  --dsw-alias-border-l1: rgb(20 20 20 / 18%);
+  --dsw-alias-border-l2: rgb(20 20 20 / 26%);
+  --dsw-alias-border-l3: rgb(20 20 20 / 34%);
+  --dsw-alias-border-l4: rgb(20 20 20 / 46%);
+  --dsw-alias-bg-module-platform: #e4e4e1;
+}
+
+/* 等高线：浅底上用墨色细线，计曲线用更深的信号黄，否则看不见。 */
+html[data-endfield-surface="light"] [data-ef="contour"] path {
+  stroke: rgb(20 20 20 / 20%);
+}
+
+html[data-endfield-surface="light"] [data-ef="contour"] path[data-ef-index] {
+  stroke: rgb(122 108 0 / 72%);
+}
+
+/* 四周压暗在浅底上要轻得多。 */
+html[data-endfield-surface="light"] [data-ef="wash"] {
+  background-image: radial-gradient(132% 124% at 50% 46%, transparent 58%, rgb(20 20 20 / 8%) 100%);
+}
+
+/* 视口外框与四角括号：浅底上全部改用墨色。 */
+html[data-endfield-surface="light"] [data-ef="frame"] {
+  border-color: rgb(20 20 20 / 22%);
+}
+
+html[data-endfield-surface="light"] [data-ef="corner"] {
+  border-color: rgb(20 20 20 / 55%);
+}
+
+/* ── 开屏动画也跟着变浅：纸白装载屏 + 墨色等高线/文字 ─────────────────── */
+html[data-endfield-surface="light"] [data-endfield-splash] {
+  background: #f2f2f0;
+}
+
+html[data-endfield-surface="light"] [data-ef="s-contour"] path {
+  stroke: rgb(20 20 20 / 16%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-contour"] path[data-ef-index] {
+  stroke: rgb(122 108 0 / 62%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-scan"] {
+  background: rgb(20 20 20 / 14%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-corner"] {
+  border-color: rgb(20 20 20 / 55%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-title"] {
+  color: #131312;
+}
+
+html[data-endfield-surface="light"] [data-ef="s-sub"],
+html[data-endfield-surface="light"] [data-endfield-splash] [data-ef="s-readout"] {
+  color: rgb(19 19 18 / 62%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-dots"] i {
+  background: rgb(20 20 20 / 22%);
+}
+
+html[data-endfield-surface="light"] [data-ef="s-grid"] {
+  background-image: radial-gradient(122% 104% at 50% 46%, transparent 52%, rgb(20 20 20 / 10%) 100%);
+}
+
+/* 输入区：浅底上改成纸白面板 + 墨色描边，内部文字改回墨色层级。 */
+html[data-endfield-surface="light"] [data-composer-card] {
+  border-color: var(--ef-line-strong) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f2 100%) !important;
+  box-shadow:
+    0 0 0 0.5px rgb(20 20 20 / 10%),
+    0 10px 26px rgb(20 20 20 / 12%) !important;
+
+  --dsw-alias-label-primary: #141414;
+  --dsw-alias-label-secondary: #3a3a38;
+  --dsw-alias-label-tertiary: #565654;
+  --dsw-alias-label-caption: #6f6f6c;
+  --dsw-alias-label-primary-foreground: #f2f2f0;
+  --dsw-alias-interactive-bg-hover: rgb(20 20 20 / 7%);
+  --dsw-alias-interactive-bg-active: rgb(20 20 20 / 12%);
+  --dsw-alias-border-l1: rgb(20 20 20 / 12%);
+  --dsw-alias-border-l2: rgb(20 20 20 / 18%);
+  --dsw-alias-border-l3: rgb(20 20 20 / 26%);
+  --dsw-alias-border-l4: rgb(20 20 20 / 36%);
+}
+
+html[data-endfield-surface="light"] [data-composer-card] :where(button[class*="_primary"]) {
+  background: #141414 !important;
+  color: #f2f2f0 !important;
+}
+
+html[data-endfield-surface="light"] [data-composer-card] :focus-visible {
+  outline-color: rgb(20 20 20 / 45%) !important;
+}
+
+html[data-endfield-surface="light"] [data-composer-chip] {
+  border-color: rgb(20 20 20 / 16%) !important;
+  background: rgb(20 20 20 / 4%) !important;
+}
+
+html[data-endfield-surface="light"] [data-composer-chip]:hover {
+  border-color: rgb(20 20 20 / 34%) !important;
+}
+
+/* 用户气泡的文字在浅色变体里已经是墨色（令牌镜像），这里只确保发送键图标跟着走。 */
+html[data-endfield-surface="light"] [data-composer-chip] :where(svg) {
+  color: inherit;
+}
+
+/* 光标（输入栏里的闪烁竖线）：浅色变体下默认是白的，在纸白输入框上看不见，
+   换成**深暗金** `#6f6a00`（信号黄的暗调，对比度约 5.5:1）：色相仍在黄色家族里，
+   但在纸白底上足够沉、一眼能看见；越接近 `#fffa00` 越糊。 */
+html[data-endfield-surface="light"] :where(input, textarea, [contenteditable], [contenteditable="true"]) {
+  caret-color: #6f6a00;
+}
+
+html[data-endfield-surface="light"] [data-composer-card] :where(input, textarea, [contenteditable], [contenteditable="true"]) {
+  caret-color: #6f6a00 !important;
+}
+
+/* 无障碍：尊重系统的“减少动态效果”。 */
+@media (prefers-reduced-motion: reduce) {
+  [data-ef="corner"] {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  /* 等高线场静止（纹理保留，只去掉漂移）。 */
+  [data-ef="contour"] {
+    animation: none;
+  }
+
+  /* 开屏动画整体降级为静态一帧（脚本同时会跳过整段过场）。 */
+  [data-endfield-splash] *,
+  [data-endfield-splash] {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}
